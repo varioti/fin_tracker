@@ -1,0 +1,11 @@
+decouple
+flask
+flask_login
+flask_wtf
+wtforms
+flask_sqlalchemy
+pandas
+plotly
+requests
+pyproj
+pusher

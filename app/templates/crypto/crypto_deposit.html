@@ -1,0 +1,184 @@
+{% extends "crypto/crypto_topnav.html" %}
+
+{% block content %}
+
+<script type="text/javascript" src="/static/js/crypto.js"></script>
+<div style="width:100vw; height:90vh; float: up;">
+    <div id="summary1" style="width:50%; float: left;">
+        <h2>Summary</h2>
+        <table style="width:90%; margin-left: auto; margin-right: auto;">
+            <tr>
+                <td style="background-color:blue;">Deposited</td>
+                <td style="background-color:red;"><b>{{totals[0]}} €</b></td>
+            </tr>
+            <tr>
+                <td style="background-color:blue;">Withdrawn</td>
+                <td style="background-color:green;"><b>{{totals[1]}} €</b></td>
+            </tr>
+
+            <tr>
+                <td style="background-color:blue;">Total</td>
+                {% if totals[2] < 0 %}
+                <td style="background-color:red;"><b>{{totals[2]}} €</b></td>
+                {% else %}
+                <td style="background-color:green;"><b>{{totals[2]}} €</b></td>
+                {% endif %}
+            </tr>
+            <tr>
+                <td style="background-color:blue;">Portfolio</td>
+                <td style="background-color:grey;"><b>{{'%0.2f'|format(totals[3])|float}} €</b></td>
+            </tr>
+            <tr>
+                <td style="background-color:blue;">Profit</td>
+                {% if totals[4] < 0 %}
+                <td style="background-color:red;"><b>{{'%0.2f'|format(totals[4])|float}} €</b></td>
+                {% else %}
+                <td style="background-color:green;"><b>{{'%0.2f'|format(totals[4])|float}} €</b></td>
+                {% endif %}
+            </tr>
+        </table>
+
+        <div id="chart" class="chart" style="width:90%; margin-left: auto; margin-right: auto;"></div>
+        <div>{{description}}</div>
+    </div>
+
+    <div id="summary2" style="width:50%; float: left;">
+        <h2>Portfolio balance : {{'%0.2f'| format(total_balance)|float}} $</h2>
+        <table id="tracker" style="width:90%; margin-left: auto; margin-right: auto;">
+            {% for key, value in balance.items() %}
+            <tr>
+                <td style="background-color:blue;">{{value["asset"]}}</td>
+                <td style="background-color: rgba(128,128,128,.25);"><b>{{'%0.6f'| format(value["amount"]|float)}}</b></td>
+                <td style="background-color: rgba(128,128,128,.25);"><b>{{'%0.2f'| format(value["usd"]|float)}} $</b></td>
+                {% set percent = value["usd"]/total_balance*100 %}
+                <td style="background-color: rgba(128,128,128,.25);"><b>{{'%0.2f'| format(percent|float)}} %</b></td>
+            </tr>
+            {% endfor %}
+
+        </table>
+    </div>
+</div>
+
+<a name="historic"></a>
+<div id="historic" style="width:100vw;">
+    <h1>Deposit - Withdrawal</h1>
+    <div class= "showTable" id="deposit_table">
+        <div style="width:100%; height:48px;">
+            <a onclick="showall('d')" >Show more</a>
+            <a onclick="showless('d')" >Show less</a>
+        </div>
+        <div style="width:100%;">
+            <table id="dep_table" style="width:60%; margin-left: auto; margin-right: auto;">
+                    <thead>
+                    <tr>
+                        <th>Amount</th>
+                        <th>Date</th>
+                        <th>Platform</th>
+                        <th><a href="add/">Add new</a></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for value in histo %}
+
+                        {% if loop.index > 5 %}
+                        <tr style="background-color: rgba(128,128,128,.25); display: none;">
+                        {% else %}
+                        <tr style="background-color: rgba(128,128,128,.25);">
+                        {% endif %}
+
+                            <td><b>{{value[1]}} €</b></td>
+                            <td>{{value[2]}}</td>
+                            <td>{{value[3]}}</td>
+                            <td><a href="update/{{loop.index - 1}}">Edit</a><a href="delete/{{loop.index - 1}}" style="background-color:red;">Delete</a></td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<a name="portfolio"></a>
+<div id="portfolio" style="width:100vw;">
+    <h1>Portfolio</h1>
+    <div class= "showTable" id="portfolio">
+        <div style="width:100%; height:48px;">
+            <a onclick="showall('p')" >Show more</a>
+            <a onclick="showless('p')" >Show less</a>
+        </div>
+        <div style="width:100%;">
+        <table id="pf_table" style="width:60%; margin-left: auto; margin-right: auto;">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Amount</th>
+                    <th><a href="pf/add/">Add new</a></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for value in portfolio %}
+                    {% if loop.index > 5 %}
+                    <tr style="background-color: rgba(128,128,128,.25); display: none;">
+                    {% else %}
+                    <tr style="background-color: rgba(128,128,128,.25);">
+                    {% endif %}
+                        <td>{{value[1]}}</td>
+                        <td>{{value[2]}} €</td>
+                        <td><a href="pf/update/{{loop.index - 1}}">Edit</a><a href="pf/delete/{{loop.index - 1}}" style="background-color:red;">Delete</a></td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        </div>
+    </div>
+</div>
+</a>
+
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+<script type="text/javascript">
+    let graphs = {{graphJSON | safe}};
+    Plotly.plot('chart',graphs,{});
+
+
+    let button1 = document.createElement("a");
+    let text1 = document.createTextNode("Go to Deposits");
+    button1.appendChild(text1);
+    button1.href = "#historic"
+
+    let button2 = document.createElement("a");
+    let text2 = document.createTextNode("Go to Portfolio");
+    button2.appendChild(text2);
+    button2.href = "#portfolio"
+
+    let element = document.getElementsByClassName("topnav")[0];
+    element.appendChild(button1);
+    element.appendChild(button2);
+</script>
+<script>
+document.addEventListener("DOMContentLoaded", function(event) {
+  let table, rows, switching, i, x, y, shouldSwitch;
+  table = document.getElementById("tracker");
+  switching = true;
+  while (switching) {
+    switching = false;
+    rows = table.rows;
+    for (i = 0; i < (rows.length - 1); i++) {
+      shouldSwitch = false;
+      x = rows[i].getElementsByTagName("TD")[2];
+      y = rows[i + 1].getElementsByTagName("TD")[2];
+      const a = x.innerHTML.split(" ")[0].split(">")[1]
+      const b = y.innerHTML.split(" ")[0].split(">")[1]
+      if (Number(a) < Number(b)) {
+        shouldSwitch = true;
+        break;
+      }
+    }
+    if (shouldSwitch) {
+      rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
+      switching = true;
+    }
+  }
+});
+</script>
+
+{% endblock %}

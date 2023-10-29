@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+{% import "macros.html" as macros %}
+
+<html>
+    <head>
+        <title>Crypto Add Sell Transaction</title>
+        <link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='css/crypto.css') }}">
+        <script src="https://code.jquery.com/jquery-1.9.1.min.js"></script>
+    </head>
+    <body>
+        <h1>Add a new transaction (SELL) in {{coin}}</h1>
+        <div class="main">
+            <form action="/crypto/sell/{{id}}" method="POST">
+                <label for="amount">Enter the amount: </label>
+                <input type="number" step="0.0001" min="0" id="amount" name="amount"><br>
+                <label for="price">Enter the price: </label>
+                <input type="number" step="0.0001" min="0" id="price" name="price"><br>
+                <input type="submit" value="Add">
+            </form>
+        </div>
+
+        <h1>Calculator</h1>
+        <div class="container">
+            <div class="main">
+                {{macros.rate_calculator()}}
+
+                {{macros.converter()}}
+
+            </div>
+        </div>
+        <script>
+            $( document ).ready(function() {
+                let params = (new URL(document.location)).searchParams;
+                for (const [key, value] of params.entries()) {
+                    document.getElementById(key).value = decodeURIComponent(value);
+                }
+            });
+        </script>
+    </body>
+</html>

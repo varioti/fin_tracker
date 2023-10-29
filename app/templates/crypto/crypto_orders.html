@@ -1,0 +1,109 @@
+{% extends "crypto/crypto_topnav.html" %}
+{% import "macros.html" as macros %}
+
+{% block content %}
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+    <script src="{{url_for('static', filename='js/orders.js')}}"></script>
+
+    <div class="container" style ="overflow: hidden;">
+        <h1>
+            <div style='float:center;'>
+              {{coin}} Orders
+            </div>
+        </h1>
+        {% if last_order|length > 1 %}
+        <table id="resume" style="width: 100%; float: center;">
+            <tr>
+                <th>Period</th>
+                <th>Last</th>
+                <th>1W</th>
+                <th>1M</th>
+                <th>3M</th>
+                <th>6M</th>
+                <th>1Y</th>
+                <th>ALL</th>
+                <th>Custom</th>
+            </tr>
+            <tr>
+                <td style="background-color: green">Buy Mean</td>
+                <td></td>
+                <td style="background-color: green">0</td>
+                <td style="background-color: green">0</td>
+                <td style="background-color: green">0</td>
+                <td style="background-color: green">0</td>
+                <td style="background-color: green">0</td>
+                <td style="background-color: green">{{coin_object.getBuyMean()}}</td>
+                <td style="background-color: green">{{coin_object.getBuyMean()}}</td>
+            </tr>
+            <tr>
+                <td style="background-color: green">Buy Total</td>
+                <td>{{last_order[1]}}</td>
+                <td style="background-color: green">0</td>
+                <td style="background-color: green">0</td>
+                <td style="background-color: green">0</td>
+                <td style="background-color: green">0</td>
+                <td style="background-color: green">0</td>
+                <td style="background-color: green">{{coin_object.getBuyTotal()}}</td>
+                <td style="background-color: green">{{coin_object.getBuyTotal()}}</td>
+            </tr>
+            <tr>
+                <td style="background-color: red">Sell Mean</td>
+                <td>{{last_order[0]}}</td>
+                <td style="background-color: red">0</td>
+                <td style="background-color: red">0</td>
+                <td style="background-color: red">0</td>
+                <td style="background-color: red">0</td>
+                <td style="background-color: red">0</td>
+                <td style="background-color: red">{{coin_object.getSellMean()}}</td>
+                <td style="background-color: red">{{coin_object.getSellMean()}}</td>
+            </tr>
+            <tr>
+                <td style="background-color: red">Sell Total</td>
+                <td></td>
+                <td style="background-color: red">0</td>
+                <td style="background-color: red">0</td>
+                <td style="background-color: red">0</td>
+                <td style="background-color: red">0</td>
+                <td style="background-color: red">0</td>
+                <td style="background-color: red">{{coin_object.getSellTotal()}}</td>
+                <td style="background-color: red">{{coin_object.getSellTotal()}}</td>
+            </tr>
+        </table>
+        {% endif %}
+    </div>
+    <table id="orders" style="width: 100%;">
+        <tr>
+            <th>Symbol</th>
+            <th>Side</th>
+            <th>Amount {{coin}}</th>
+            <th>Amount $</th>
+            <th>Price</th>
+            <th>Status</th>
+            <th>Time</th>
+            <th>Add</th>
+        </tr>
+        {% for order in orders %}
+        <tr>
+            <td>{{order["symbol"]}}</td>
+            <td>{{order["side"]}}</td>
+            <td>{{order["executedQty"]}} {{coin}}</td>
+            <td>{{order["cummulativeQuoteQty"]|float|round(2)}} $</td>
+            {% if order["executedQty"]|float > 0 %}
+            <td>{{((order["cummulativeQuoteQty"]|float)/(order["executedQty"]|float))|round(4)}} $</td>
+            {% else %}
+            <td>NULL</td>
+            {% endif %}
+            <td>{{order["status"]}}</td>
+            <td>{{order["time"]}}</td>
+            {% if last_order|length > 1 and order["status"] == "FILLED" %}
+                {% if order["side"] == "BUY" %}
+                <td><div class="transactionnav"><a href="/crypto/buy/{{last_order[2]}}?amount={{order["cummulativeQuoteQty"]|float|round(2)}}&price={{((order["cummulativeQuoteQty"]|float)/(order["executedQty"]|float))|round(4)}}">Add</a></div></td>
+                {% else %}
+                <td><div class="transactionnav"><a href="/crypto/sell/{{last_order[2]}}?amount={{order["cummulativeQuoteQty"]|float|round(2)}}&price={{((order["cummulativeQuoteQty"]|float)/(order["executedQty"]|float))|round(4)}}">Add</a></div></td>
+                {% endif %}
+            {% endif %}
+        </tr>
+        {% endfor %}
+    </table>
+{% endblock %}

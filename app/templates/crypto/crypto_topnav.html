@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Crypto</title>
+        <link rel= "stylesheet" type= "text/css" href= "{{ url_for('static',filename='css/crypto.css') }}">
+    </head>
+    <body>
+        <div class="topnav">
+            <a href="/crypto/">Buy & Sell Prices</a>
+            <a href="/crypto/deposit/">Deposit & Withdraw</a>
+            <a href="/crypto/tracker/">Portfolio Tracker</a>
+        </div>
+
+        {% block content %}
+        {% endblock %}
+    </body>
+</html>
