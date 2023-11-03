@@ -183,6 +183,37 @@ def get_all_earn_products():
 
     return all_products
 
+def get_blockchain_balance(address):
+    # Check address
+    if len(address) != 42 :
+        return 0, 0
+    
+    url = f"https://blockchain.info/balance?active={address}"
+
+    response = requests.get(url)
+    balance_in_sat = int(json.loads(response.text)[address]["final_balance"])
+    balance_in_btc = balance_in_sat/10**8
+
+    price_usd = get_price("BTC","USD")
+    balance_in_usd = balance_in_btc * price_usd
+
+    return balance_in_btc, balance_in_usd
+
+def get_etherscan_balance(address):
+    # Check address
+    if len(address) != 42 :
+        return 0, 0
+    
+    url = f"https://api.etherscan.io/api?module=account&action=balance&address={address}&tag=latest&apikey={etherscan_api_key}"
+    response = requests.get(url)
+    balance_in_wei = json.loads(response.text)["result"]
+
+    balance_in_ether = int(balance_in_wei) / 10**18 # Convert Wei to Ether (1 Ether = 10^18 Wei)
+    price_usd = get_price("ETH","USD")
+    balance_in_usd = balance_in_ether * price_usd
+
+    return balance_in_ether, balance_in_usd
+
 def get_global_balance(others={}):
     # INIT
     balance = 0
@@ -240,13 +271,8 @@ def get_global_balance(others={}):
                         assets[s["asset"]]["usd"] += p
 
     # ETHERSCAN
-    url = f"https://api.etherscan.io/api?module=account&action=balance&address={etherscan_address}&tag=latest&apikey={etherscan_api_key}"
-    response = requests.get(url)
-    balance_in_wei = json.loads(response.text)["result"]
+    balance_in_ether, balance_in_usd = get_etherscan_balance(etherscan_address)
 
-    balance_in_ether = int(balance_in_wei) / 10**18 # Convert Wei to Ether (1 Ether = 10^18 Wei)
-    price_usd = get_price("ETH","USD")
-    balance_in_usd = balance_in_ether * price_usd
     if not ("ETH" in assets) :
         assets["ETH"] = {"asset":"ETH", "amount":balance_in_ether, "usd":balance_in_usd}
     else :
@@ -256,14 +282,7 @@ def get_global_balance(others={}):
     balance += balance_in_usd
 
     # BLOCKCHAIN.COM (BTC)
-    btc_url = f"https://blockchain.info/balance?active={btc_address}"
-
-    response = requests.get(btc_url)
-    balance_in_sat = int(json.loads(response.text)[btc_address]["final_balance"])
-    balance_in_btc = balance_in_sat/10**8
-
-    price_usd = get_price("BTC","USD")
-    balance_in_usd = balance_in_btc * price_usd
+    balance_in_btc, balance_in_usd = get_blockchain_balance(btc_address)
     if not ("BTC" in assets) :
         assets["BTC"] = {"asset":"BTC", "amount":balance_in_btc, "usd":balance_in_usd}
     else :
