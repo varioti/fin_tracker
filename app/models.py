@@ -5,15 +5,19 @@ class BaseModel(db.Model):
     __abstract__ = True
 
     @classmethod
-    def add(cls, record):
+    def create(cls, **kwargs):
+        record = cls(**kwargs)
         db.session.add(record)
         db.session.commit()
+        return record
 
     @classmethod
-    def get_by_id(cls, id):
+    def get(cls, id):
         return cls.query.get(id)
 
-    def update(self):
+    def update(self, **kwargs):
+        for key, value in kwargs.items():
+            setattr(self, key, value)
         db.session.commit()
 
     def delete(self):

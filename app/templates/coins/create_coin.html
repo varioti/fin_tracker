@@ -1,0 +1,23 @@
+{% extends "topnav.html" %}
+
+{% block content %}
+    <h1>Create New Coin</h1>
+    <form method="post">
+        <label for="coin">Coin:</label>
+        <input type="text" name="coin" required><br>
+        <label for="total_bought">Total Bought:</label>
+        <input type="number" name="total_bought" value="0" required><br>
+        <label for="mean_bought">Mean Bought:</label>
+        <input type="number" name="mean_bought" value="0" required><br>
+        <label for="total_sold">Total Sold:</label>
+        <input type="number" name="total_sold" value="0" required><br>
+        <label for="mean_sold">Mean Sold:</label>
+        <input type="number" name="mean_sold" value="0" required><br>
+        <label for="last_tr_total">Last Transaction Total:</label>
+        <input type="number" name="last_tr_total" value="0" required><br>
+        <label for="last_tr_mean">Last Transaction Mean:</label>
+        <input type="number" name="last_tr_mean" value="0" required><br>
+        <input type="submit" value="Create">
+    </form>
+    <a href="{{ url_for('list_coins') }}">Back to Coins</a>
+{% endblock %}

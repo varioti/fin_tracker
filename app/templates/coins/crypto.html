@@ -1,0 +1,70 @@
+{% extends "topnav.html" %}
+
+{% block content %}
+
+    <h1>
+        <div style='float:center;'>
+          Crypto
+        </div>
+    </h1>
+    <table style="width: 100%;">
+        <colgroup>
+            <col class="coin"/>
+            <col class="coin"/>
+            <col class="coin"/>
+            <col class="buy"/>
+            <col class="buy"/>
+            <col class="coin"/>
+            <col class="sell"/>
+            <col class="sell"/>
+        </colgroup>
+        <tr>
+            <th>
+                <a href="{{ url_for('create_coin') }}">
+                    Add
+                </a></th>
+            <th>Price</th>
+            <th>Total bought</th>
+            <th>Mean bought</th>
+            <th>Buy</th>
+            <th>Total sold</th>
+            <th>Mean sold</th>
+            <th>Sell</th>
+        </tr>
+        {% for value in coins %}
+        <tr>
+            <td>
+                <div class="transactionnav">
+                    <a href="/crypto/coin/{{value.id}}">{{value.coin}}</a>
+                    <a href="{{ url_for('update_coin', id=coin.id) }}">Edit</a>
+                    <form action="{{ url_for('delete_coin', id=coin.id) }}" method="post">
+                        <input type="submit" value="Delete">
+                    </form>
+                </div>
+            </td>
+            <td>{{value.getPrice()}} $</td>
+        
+            <td>{{value.getBuyTotal()}} $</td>
+            <td><b>{{value.getBuyMean()}} $ ({{value.getBuyMargin()}} %)</b></td>
+        
+            <td>
+                <div class="transactionnav">
+                    <a href="/crypto/buy/{{value.id}}">Buy {{value.coin}}</a>
+                </div>
+            </td>
+        
+            <td>{{value.getSellTotal()}} $</td>
+            <td><b>{{value.getSellMean()}} $  ({{value.getSellMargin()}} %)</b></td>
+        
+            <td>
+                <div class="transactionnav">
+                    <a href="/crypto/sell/{{value.id}}">Sell {{value.coin}}</a>
+                </div>
+            </td>
+        
+        </tr>
+        {% endfor %}
+    </table>
+    <a href="{{ url_for('create_coin') }}">Create New Coin</a>
+
+{% endblock %}
