@@ -33,6 +33,7 @@ def login():
             session['logged_in'] = True
             return redirect('/crypto/')
     return '''
+        <h1>Password needed to enter</h1>
         <form method="post">
             <p><input type=password name=password>
             <p><input type=submit value=Login>
