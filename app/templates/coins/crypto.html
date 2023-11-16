@@ -36,9 +36,9 @@
             <td>
                 <div class="transactionnav">
                     <a href="/crypto/coin/{{value.id}}">{{value.coin}}</a>
-                    <a href="{{ url_for('update_coin', id=coin.id) }}">Edit</a>
-                    <form action="{{ url_for('delete_coin', id=coin.id) }}" method="post">
-                        <input type="submit" value="Delete">
+                    <a href="{{ url_for('update_coin', id=value.id) }}">Edit</a>
+                    <form id="deleteForm" action="{{ url_for('delete_coin', id=value.id) }}" method="post">
+                        <input type="submit" value="Delete" onclick="return confirmDelete('{{value.coin}}');">
                     </form>
                 </div>
             </td>
@@ -49,7 +49,7 @@
         
             <td>
                 <div class="transactionnav">
-                    <a href="/crypto/buy/{{value.id}}">Buy {{value.coin}}</a>
+                    <a href="{{ url_for('add_buy_order', id=value.id) }}">Buy {{value.coin}}</a>
                 </div>
             </td>
         
@@ -58,13 +58,18 @@
         
             <td>
                 <div class="transactionnav">
-                    <a href="/crypto/sell/{{value.id}}">Sell {{value.coin}}</a>
+                    <a href="{{ url_for('add_sell_order', id=value.id) }}">Sell {{value.coin}}</a>
                 </div>
             </td>
         
         </tr>
         {% endfor %}
     </table>
-    <a href="{{ url_for('create_coin') }}">Create New Coin</a>
+
+<script>
+    function confirmDelete(coin) {
+        return confirm("Are you sure you want to delete ${coin} ?");
+    }
+</script>
 
 {% endblock %}

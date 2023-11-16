@@ -1,4 +1,4 @@
-decouple
+python-dotenv
 flask
 flask_login
 flask_wtf
@@ -9,3 +9,4 @@ plotly
 requests
 pyproj
 pusher
+pymysql

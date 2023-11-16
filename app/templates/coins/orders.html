@@ -1,5 +1,4 @@
-{% extends "crypto/crypto_topnav.html" %}
-{% import "macros.html" as macros %}
+{% extends "topnav.html" %}
 
 {% block content %}
 
@@ -98,9 +97,9 @@
             <td>{{order["time"]}}</td>
             {% if last_order|length > 1 and order["status"] == "FILLED" %}
                 {% if order["side"] == "BUY" %}
-                <td><div class="transactionnav"><a href="/crypto/buy/{{last_order[2]}}?amount={{order["cummulativeQuoteQty"]|float|round(2)}}&price={{((order["cummulativeQuoteQty"]|float)/(order["executedQty"]|float))|round(4)}}">Add</a></div></td>
+                <td><div class="transactionnav"><a href="/crypto/coin/{{coin_object.id}}/buy/?amount={{order["cummulativeQuoteQty"]|float|round(2)}}&price={{((order["cummulativeQuoteQty"]|float)/(order["executedQty"]|float))|round(4)}}">Add</a></div></td>
                 {% else %}
-                <td><div class="transactionnav"><a href="/crypto/sell/{{last_order[2]}}?amount={{order["cummulativeQuoteQty"]|float|round(2)}}&price={{((order["cummulativeQuoteQty"]|float)/(order["executedQty"]|float))|round(4)}}">Add</a></div></td>
+                <td><div class="transactionnav"><a href="/crypto/coin/{{coin_object.id}}sell/?amount={{order["cummulativeQuoteQty"]|float|round(2)}}&price={{((order["cummulativeQuoteQty"]|float)/(order["executedQty"]|float))|round(4)}}">Add</a></div></td>
                 {% endif %}
             {% endif %}
         </tr>

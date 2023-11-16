@@ -55,12 +55,32 @@ class Coin(BaseModel):
         return get_price(self.coin)
 
     def getBuyMargin(self):
+        if self.mean_bought == 0:
+            return 0
+        
         buy_margin = (self.getPrice() - self.mean_bought)/self.mean_bought*100
         return round(buy_margin,2)
 
     def getSellMargin(self):
+        if self.mean_sold == 0:
+            return 0
+        
         sell_margin = (self.getPrice() - self.mean_sold)/self.mean_sold*100
         return round(sell_margin,2)
+    
+    def addBuyTransaction(self, amount, price):
+        self.total_bought += amount
+        self.mean_bought = (self.mean_bought * (self.total_bought - amount) + amount * price) / self.total_bought
+        self.last_tr_total = amount
+        self.last_tr_mean = price
+        db.session.commit()
+
+    def addSellTransaction(self, amount, price):
+        self.total_sold += amount
+        self.mean_sold = (self.mean_sold * (self.total_sold - amount) + amount * price) / self.total_sold
+        self.last_tr_total = amount
+        self.last_tr_mean = price
+        db.session.commit()
 
 class CryptoPortfolio(BaseModel):
     __tablename__ = 'crypto_portfolio'

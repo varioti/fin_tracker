@@ -1,33 +1,3 @@
-{% macro display_coin(value)%}
-<tr>
-    <td>
-        <div class="transactionnav">
-            <a href="/crypto/orders/{{value.coin}}">{{value.coin}}</a>
-        </div>
-    </td>
-    <td>{{value.getPrice()}} $</td>
-
-    <td>{{value.getBuyTotal()}} $</td>
-    <td><b>{{value.getBuyMean()}} $ ({{value.getBuyMargin()}} %)</b></td>
-
-    <td>
-        <div class="transactionnav">
-            <a href="/crypto/buy/{{value.id}}">Buy {{value.coin}}</a>
-        </div>
-    </td>
-
-    <td>{{value.getSellTotal()}} $</td>
-    <td><b>{{value.getSellMean()}} $  ({{value.getSellMargin()}} %)</b></td>
-
-    <td>
-        <div class="transactionnav">
-            <a href="/crypto/sell/{{value.id}}">Sell {{value.coin}}</a>
-        </div>
-    </td>
-
-</tr>
-{% endmacro %}
-
 {% macro rate_calculator()%}
 <h2>Compute the price in dollar (rate)</h2>
     <label for="dollar">Amount in dollar: </label>
