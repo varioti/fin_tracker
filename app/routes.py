@@ -58,6 +58,9 @@ def list_coins():
 # Read a coin (display details)
 @app.route("/crypto/coin/<int:id>", methods=["GET"])
 def read_coin(id):
+    if not 'logged_in' in session:
+        return authenticate()
+        
     coin = Coin.get(id)
     if coin is None:
         return "Coin not found", 404
@@ -79,6 +82,9 @@ def read_coin(id):
 # Create a new coin
 @app.route("/crypto/coin/create/", methods=["GET", "POST"])
 def create_coin():
+    if not 'logged_in' in session:
+        return authenticate()
+    
     if request.method == "POST":
         # Get form data
         coin = request.form.get("coin")
@@ -103,6 +109,9 @@ def create_coin():
 # Delete a coin
 @app.route("/crypto/coin/delete/<int:id>", methods=["POST"])
 def delete_coin(id):
+    if not 'logged_in' in session:
+        return authenticate()
+    
     coin = Coin.get(id)
     if coin is None:
         return "Coin not found", 404
@@ -115,6 +124,9 @@ def delete_coin(id):
 # Update a coin
 @app.route("/crypto/coin/update/<int:id>", methods=["GET", "POST"])
 def update_coin(id):
+    if not 'logged_in' in session:
+        return authenticate()
+    
     coin = Coin.get(id)
     if coin is None:
         return "Coin not found", 404
@@ -145,37 +157,43 @@ def update_coin(id):
 # [TRANSACTION] Add a new buy transaction for this coin
 @app.route("/crypto/coin/<int:id>/buy/", methods=["GET","POST"])
 def add_buy_order(id):
-        coin = Coin.get(id)
-        if coin is None:
-            return "Coin not found", 404
+    if not 'logged_in' in session:
+        return authenticate()
+    
+    coin = Coin.get(id)
+    if coin is None:
+        return "Coin not found", 404
 
-        # Show the add page (when clicked)
-        if request.method == "GET":
-                return render_template("coins/orders_add_buy.html", coin = coin.coin, id = id)
+    # Show the add page (when clicked)
+    if request.method == "GET":
+            return render_template("coins/orders_add_buy.html", coin = coin.coin, id = id)
 
-        # Otherwise (POST) : add the new task in the dict and show the home page
-        _amount = request.form["amount"]
-        _price = request.form["price"]
-        if _amount and _price:
-            coin.addBuyTransaction(float(_amount),float(_price))
+    # Otherwise (POST) : add the new task in the dict and show the home page
+    _amount = request.form["amount"]
+    _price = request.form["price"]
+    if _amount and _price:
+        coin.addBuyTransaction(float(_amount),float(_price))
 
-        return redirect(url_for("read_coin", id=id))
+    return redirect(url_for("read_coin", id=id))
 
 # [TRANSACTION] Add a new buy transaction for this coin
 @app.route("/crypto/coin/<int:id>/sell/", methods=["GET","POST"])
 def add_sell_order(id):
-        coin = Coin.get(id)
-        if coin is None:
-            return "Coin not found", 404
+    if not 'logged_in' in session:
+        return authenticate()
+    
+    coin = Coin.get(id)
+    if coin is None:
+        return "Coin not found", 404
 
-        # Show the add page (when clicked)
-        if request.method == "GET":
-                return render_template("coins/orders_add_sell.html", coin = coin.coin, id = id)
+    # Show the add page (when clicked)
+    if request.method == "GET":
+            return render_template("coins/orders_add_sell.html", coin = coin.coin, id = id)
 
-        # Otherwise (POST) : add the new task in the dict and show the home page
-        _amount = request.form["amount"]
-        _price = request.form["price"]
-        if _amount and _price:
-            coin.addSellTransaction(float(_amount),float(_price))
+    # Otherwise (POST) : add the new task in the dict and show the home page
+    _amount = request.form["amount"]
+    _price = request.form["price"]
+    if _amount and _price:
+        coin.addSellTransaction(float(_amount),float(_price))
 
-        return redirect(url_for("read_coin", id=id))
+    return redirect(url_for("read_coin", id=id))
