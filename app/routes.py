@@ -197,3 +197,86 @@ def add_sell_order(id):
         coin.addSellTransaction(float(_amount),float(_price))
 
     return redirect(url_for("read_coin", id=id))
+
+#############
+# PORTFOLIO #
+#############
+
+@app.route("/crypto/portfolio/", methods=["GET","POST"])
+def portfolio():
+    if not 'logged_in' in session:
+        return authenticate()
+    
+    # Get all the coins retrieved from the database
+    manual_coins = CryptoManualPortfolio.query.all()
+    manual_total = float(sum([coin.getUSDValue() for coin in manual_coins]))
+
+    # Get all the coins retrieved from the APIs
+    auto_total, auto_coins = get_global_balance()
+
+    return render_template("portfolio/portfolio.html", coins = auto_coins, total_balance = auto_total + manual_total, manual_coins = manual_coins)
+
+@app.route("/crypto/portfolio/add/", methods=["GET","POST"])
+def portfolio_add():
+    if not 'logged_in' in session:
+        return authenticate()
+    
+    if request.method == "POST":
+        # Get form data
+        coin = request.form.get("asset")
+        if get_price(coin) == 0:
+            return "Coin not found", 404
+        
+        amount = request.form.get("amount")
+        platform = request.form.get("platform")
+
+        # Create a new coin record
+        coin = CryptoManualPortfolio.create(
+            asset=coin,
+            amount=amount,
+            platform=platform,
+        )
+
+        return redirect(url_for("portfolio"))
+
+    return render_template("portfolio/add_coin.html")
+
+@app.route("/crypto/portfolio/delete/<int:id>", methods=["GET", "POST"])
+def portfolio_delete(id):
+    if not 'logged_in' in session:
+        return authenticate()
+    
+    coin = CryptoManualPortfolio.get(id)
+    if coin is None:
+        return "Coin not found", 404
+
+    # Delete the coin record
+    coin.delete()
+
+    return redirect(url_for("portfolio"))
+
+@app.route("/crypto/portfolio/update/<int:id>", methods=["GET", "POST"])
+def portfolio_update(id):
+    if not 'logged_in' in session:
+        return authenticate()
+    
+    coin = CryptoManualPortfolio.get(id)
+    if coin is None:
+        return "Coin not found", 404
+
+    if request.method == "POST":
+        # Get form data
+        asset = request.form.get("asset")
+        amount = request.form.get("amount")
+        platform = request.form.get("platform")
+
+        # Update the coin record
+        coin.update(
+            asset=asset,
+            amount=amount,
+            platform=platform,
+        )
+
+        return redirect(url_for("portfolio"))
+
+    return render_template("portfolio/update_coin.html", asset=coin.asset, amount=coin.amount, platform=coin.platform)

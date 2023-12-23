@@ -1,14 +1,14 @@
-{% extends "crypto/crypto_topnav.html" %}
+{% extends "crypto/topnav.html" %}
 {% import "macros.html" as macros %}
 
 {% block content %}
-<h1>Update value {{transaction[2]}} ({{transaction[1]}})</h1>
+<h1>Add a portfolio value</h1>
 <div class="main">
-<form action="/crypto/deposit/pf/update/{{id}}" method="POST">
+<form action="/crypto/deposit/pf/add/" method="POST">
     <label for="amount">Enter the amount: </label>
-    <input type="number" step="0.01" id="amount" name="amount" value={{transaction[2]}}><br>
+    <input type="number" step="0.01" id="amount" name="amount"><br>
     <label for="price">Enter the date: </label>
-    <input type="date" min="2010-01-01" id="date" name="date" value={{transaction[1]}}><br>
+    <input type="date" min="2010-01-01" id="date" name="date" value={{last_value}}><br>
     <input type="submit" value="Add">
 </form>
 </div>

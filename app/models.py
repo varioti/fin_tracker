@@ -82,7 +82,22 @@ class Coin(BaseModel):
         self.last_tr_mean = price
         db.session.commit()
 
-class CryptoPortfolio(BaseModel):
+class CryptoManualPortfolio(BaseModel):
+    __tablename__ = 'crypto_manual_portfolio'
+
+    id = db.Column(db.SmallInteger, primary_key=True, autoincrement=True)
+    asset = db.Column(db.String(255), nullable=False)
+    amount = db.Column(db.DECIMAL(precision=18, scale=8), nullable=False)
+    platform = db.Column(db.String(255))
+
+    def getPrice(self):
+        return get_price(self.asset)
+    
+    def getUSDValue(self):
+        return self.getPrice() * self.amount
+    
+
+class CryptoPortfolioTimestamps(BaseModel):
     __tablename__ = 'crypto_portfolio'
 
     id = db.Column(db.SmallInteger, primary_key=True, autoincrement=True)

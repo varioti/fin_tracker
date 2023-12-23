@@ -1,0 +1,16 @@
+{% extends "topnav.html" %}
+
+{% block content %}
+<h1>Update {{coin.asset}} in portfolio</h1>
+<div class="main">
+<form method="POST">
+    <label for="asset">Enter the asset: </label>
+    <input type="text" id="asset" name="asset" value="{{coin.asset}}"><br>
+    <label for="amount">Enter the amount (in asset): </label>
+    <input type="number" step="0.0000001" id="amount" name="amount" value="{{coin.asset}}"><br>
+    <label for="platform">Enter the platform: </label>
+    <input type="text" id="platform" name="platform" value="{{coin.platform}}"><br>
+    <input type="submit" value="Update">
+</form>
+</div>
+{% endblock %}

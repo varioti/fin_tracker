@@ -1,0 +1,59 @@
+{% extends "topnav.html" %}
+
+{% block content %}
+
+<head>
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/v/bs4/dt-1.11.5/datatables.min.css"/>
+    <script type="text/javascript" src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/v/bs4/dt-1.11.5/datatables.min.js"></script>
+</head>
+
+<script>
+    $(document).ready(function() {
+        $('#portfolioTable').DataTable();
+    });
+</script>
+
+
+
+<div id="portfolio" style="width:100%; float: left;">
+    <h2>Live portfolio: {{'%0.2f'| format(total_balance|float)}}</h2>
+    <table id="portfolioTable" style="width:90%; margin-left: auto; margin-right: auto;">
+            <thead>
+            <tr>
+                <th>Asset</th>
+                <th>Amount</th>
+                <th>USD</th>
+                <th>Platform</th>
+                <th><a href="{{url_for('portfolio_add')}}">Add new</a></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for key, value in coins.items() %}
+            <tr>
+                <td style="background-color:blue;">{{value["asset"]}}</td>
+                <td style="background-color: rgba(128,128,128,.25);"><b>{{'%0.6f'| format(value["amount"]|float)}}</b></td>
+                <td style="background-color: rgba(128,128,128,.25);"><b>{{'%0.2f'| format(value["usd"]|float)}} $</b></td>
+                <td style="background-color:blue;">{{value["platform"]}}</td>
+                <td style="background-color: rgba(128,128,128,.25);">Auto</td>
+
+            </tr>
+            {% endfor %}
+
+            {% for value in manual_coins %}
+            <tr>
+                <td style="background-color:blue;">{{value.asset}}</td>
+                <td style="background-color: rgba(128,128,128,.25);"><b>{{'%0.6f'| format(value.amount|float)}}</b></td>
+                <td style="background-color: rgba(128,128,128,.25);"><b>{{'%0.2f'| format(value.getUSDValue()|float)}} $</b></td>
+                <td style="background-color:blue;">{{value.platform}}</td>
+                <td style="background-color: rgba(128,128,128,.25);">
+                    <a href="{{url_for('portfolio_update', id=value.id)}}">Edit</a>
+                    <a href="{{url_for('portfolio_delete', id=value.id)}}" style="background-color:red;">Delete</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% endblock %}
