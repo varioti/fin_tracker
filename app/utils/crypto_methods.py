@@ -1,14 +1,13 @@
 from app.utils.api_methods import get_price
 from datetime import datetime
 
-def deposit_totals(transactions, index):
+def deposit_totals(transactions):
     """
     Computes the total of deposits, withdraw and the total balance
 
     Parameters:
     -----------
-    - transactions (list) : list of all transactions (tuple)
-    - index (int) : index where are the amount values in the tuples
+    - transactions (list) : list of all transactions (Type: CryptoTransactions)
 
     Returns:
     --------
@@ -20,7 +19,7 @@ def deposit_totals(transactions, index):
     total_withdraw = 0
     total_balance = 0
     for tr in transactions:
-        amount = round(tr[index],2)
+        amount = round(tr.amount ,2)
         if amount < 0:
             total_deposit -= amount
         else:
@@ -30,16 +29,13 @@ def deposit_totals(transactions, index):
 
     return round(total_deposit,2), round(total_withdraw,2), round(total_balance,2)
 
-def deposit_evolution(transactions, index_date, index_amount):
+def deposit_evolution(transactions):
     """
     Computes the total of deposits, withdraw and the total balance
 
     Parameters:
     -----------
     - transactions (list) : list of all transactions (tuple)
-    - index_date (int) : index where are the date values in the tuples
-    - index_amount (int) : index where are the amount values in the tuples
-    - evo_pf (list) : list of dates and list of amounts
 
     Returns:
     --------
@@ -52,8 +48,8 @@ def deposit_evolution(transactions, index_date, index_amount):
 
     for i in range(len(transactions)):
         tr = transactions[len(transactions)-1-i]
-        date = str(tr[index_date])
-        amount = round(tr[index_amount],2)
+        date = str(tr.deposit_date)
+        amount = round(tr.amount ,2)
         cumul_amount += amount
 
 
@@ -69,28 +65,6 @@ def deposit_evolution(transactions, index_date, index_amount):
 
     return dates,evolution
 
-def pf_evolution(portfolio, index_date, index_amount):
-    """
-    Computes the total of deposits, withdraw and the total balance
-
-    Parameters:
-    -----------
-    - portfolio (list) : portfolio table (date and amount)
-    - index_date (int) : index where are the date values in the tuples
-    - index_amount (int) : index where are the amount values in the tuples
-
-    Returns:
-    --------
-    - dates (list) : date value for each value in the evolution list
-    - evo_pf (list) : amount of portfolio at the correspondant date
-    """
-    pf_inverse = reversed(portfolio)
-    dates = [x[1] for x in pf_inverse]
-    pf_inverse = reversed(portfolio)
-    evo_pf = [x[2] for x in pf_inverse]
-
-    return dates, evo_pf
-
 def earn_evolution(balance, portfolio):
     """
     Computes the total of deposits, withdraw and the total balance
@@ -98,7 +72,8 @@ def earn_evolution(balance, portfolio):
     Parameters:
     -----------
     - balance (list) : dates and amount of the balance
-    - portfolio (list) : portfolio table (date and amount)
+    - portfolio (list) : portfolio table (CryptoPortfolioTimestamps)
+    - starting_date (str) : date of the first deposit
 
     Returns:
     --------
@@ -111,9 +86,12 @@ def earn_evolution(balance, portfolio):
     dates = []
     current_index = 0
 
-    for i in range(len(portfolio)):
-        line = portfolio[len(portfolio)-1-i]
-        date = str(line[1])
+    portfolio = sorted(portfolio, key=lambda x: x.pf_date)
+    nb_timestamps = len(portfolio)
+
+    for i in range(nb_timestamps):
+        timestamp = portfolio[i]
+        date = str(timestamp.pf_date)
 
         # Compute earning
         if str(balance[0][current_index])[:10] < date[:10] :
@@ -121,25 +99,10 @@ def earn_evolution(balance, portfolio):
                 current_index += 1
 
         dates.append(date)
-        evo_pf.append(line[2])
-        evo_earn.append(line[2]+balance[1][current_index])
+        evo_pf.append(timestamp.amount)
+        evo_earn.append(timestamp.amount + balance[1][current_index])
 
     return dates, evo_pf, evo_earn
-
-def get_track_balances(dico, asset="USD"):
-    new_dico = {}
-    totals = {}
-    for name, table in dico.items():
-        totals[name] = 0
-        new_dico[name] = {}
-
-        for row in table :
-            tot = get_price(row[1],asset)*float(row[2])
-            new_dico[name][row[1]] = {"asset":row[1],"amount":float(row[2]),"usd":tot}
-            totals[name] += tot
-
-    print(dico)
-    return new_dico, totals
 
 
 

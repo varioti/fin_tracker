@@ -1,0 +1,16 @@
+{% extends "topnav.html" %}
+
+{% block content %}
+<h1>Update deposit/withdraw transaction</h1>
+<div class="main">
+<form method="POST">
+    <label for="amount">Enter the amount (€): </label>
+    <input type="number" step="0.01" id="amount" name="amount" value="{{amount}}"><br>
+    <label for="platform">Enter the platform: </label>
+    <input type="text" id="platform" name="platform" value="{{platform}}"><br>
+    <label for="date">Enter the date: </label>
+    <input type="date" id="date" name="date" value="{{date}}"><br>
+    <input type="submit" value="Add">
+</form>
+</div>
+{% endblock %}

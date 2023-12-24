@@ -94,7 +94,7 @@ class CryptoManualPortfolio(BaseModel):
         return get_price(self.asset)
     
     def getUSDValue(self):
-        return self.getPrice() * self.amount
+        return float(self.getPrice() * self.amount)
     
 
 class CryptoPortfolioTimestamps(BaseModel):
@@ -104,19 +104,6 @@ class CryptoPortfolioTimestamps(BaseModel):
     pf_date = db.Column(db.Date)
     amount = db.Column(db.Float)
 
-class CryptoTrackerBinanceManual(BaseModel):
-    __tablename__ = 'crypto_tracker_binancemanual'
-
-    id = db.Column(db.SmallInteger, primary_key=True, autoincrement=True)
-    asset = db.Column(db.String(5))
-    amount = db.Column(db.Float)
-
-class CryptoTrackerSocios(BaseModel):
-    __tablename__ = 'crypto_tracker_socios'
-
-    id = db.Column(db.SmallInteger, primary_key=True, autoincrement=True)
-    asset = db.Column(db.String(5))
-    amount = db.Column(db.Float)
 
 class CryptoTransactions(BaseModel):
     __tablename__ = 'crypto_transactions'
