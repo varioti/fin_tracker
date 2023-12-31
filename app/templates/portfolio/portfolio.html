@@ -31,24 +31,24 @@
         <tbody>
             {% for key, value in coins.items() %}
             <tr>
-                <td style="background-color:blue;">{{value["asset"]}}</td>
+                <td style="background-color:blue; text-align: center;">{{value["asset"]}}</td>
                 <td style="background-color: rgba(128,128,128,.25);"><b>{{'%0.6f'| format(value["amount"]|float)}}</b></td>
                 <td style="background-color: rgba(128,128,128,.25);"><b>{{'%0.2f'| format(value["usd"]|float)}} $</b></td>
-                <td style="background-color:blue;">{{value["platform"]}}</td>
-                <td style="background-color: rgba(128,128,128,.25);">Auto</td>
+                <td style="background-color:blue; text-align: center;;">{{value["platform"]}}</td>
+                <td style="background-color: rgba(128,128,128,.25); text-align: center;">Auto</td>
 
             </tr>
             {% endfor %}
 
             {% for value in manual_coins %}
             <tr>
-                <td style="background-color:blue;">{{value.asset}}</td>
+                <td style="background-color:blue; text-align: center;">{{value.asset}}</td>
                 <td style="background-color: rgba(128,128,128,.25);"><b>{{'%0.6f'| format(value.amount|float)}}</b></td>
                 <td style="background-color: rgba(128,128,128,.25);"><b>{{'%0.2f'| format(value.getUSDValue()|float)}} $</b></td>
-                <td style="background-color:blue;">{{value.platform}}</td>
-                <td style="background-color: rgba(128,128,128,.25);">
-                    <a href="{{url_for('portfolio_update', id=value.id)}}">Edit</a>
-                    <a href="{{url_for('portfolio_delete', id=value.id)}}" style="background-color:red;">Delete</a>
+                <td style="background-color:blue; text-align: center;">{{value.platform}}</td>
+                <td style="background-color: rgba(128,128,128,.25); text-align: center;">
+                    <a href="{{url_for('portfolio_update', id=value.id)}}">✎</a>
+                    <a href="{{url_for('portfolio_delete', id=value.id)}}" style="background-color:red;">🗑</a>
                 </td>
             </tr>
             {% endfor %}

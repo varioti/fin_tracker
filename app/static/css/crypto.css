@@ -72,10 +72,12 @@ h3 {
     font-size: 2.4em;
     font-weight: 300;
     line-height: 1.5;
+    margin-bottom: 10px;
 }
 
 table {
     width: 100%;
+    margin-top: 5px;
   }
 
   th, td {
@@ -88,6 +90,30 @@ table {
   th {
     background-color: #0044aa;
     color: white;
+    text-align: center;
+  }
+
+  td {
+    background-color: rgba(128, 128, 128, .25);
+    color: white;
+    text-align: right;
+  }
+
+
+  .margin-positive {
+    color: darkgreen; /* Color for positive margin */
+    background-color: palegreen;
+    padding: 4px;
+    margin-right: 4px;
+    font-size: 18px;
+  }
+
+  .margin-negative {
+    color: darkred; /* Color for negative margin */
+    background-color: mistyrose;
+    padding: 4px;
+    margin-right: 4px;
+    font-size: 18px;
   }
 
   .coin {
@@ -109,32 +135,67 @@ table {
     color: white;
   }
 
+.transactionnav {
+  display: flex;
+  align-items: center;
+  float: left;
+}
+
+.editnav {
+  display: flex;
+  align-items: center;
+  float: right;
+}
+
 a:link, a:visited {
-  background-color: rgba(120,120,120,.25);
+  background-color: rgba(120, 120, 120, 0.25);
   color: white;
-  padding: 14px 25px;
+  padding: 8px 10px;
   text-align: center;
   text-decoration: none;
   display: inline-block;
+  margin: 0;  /* Remove default margin to reduce space */
 }
 
 a:hover, a:active {
-  background-color: rgba(140,140,140,.25);
+  background-color: rgba(140, 140, 140, 0.25);
 }
+
+/* Style the Edit button */
+a.edit:link, a.edit:visited {
+  background-color: grey;
+}
+
+a.edit:hover, a.edit:active {
+  background-color: darkgrey;
+}
+
+/* Style the Remove button */
+form.delete input[type="submit"] {
+  background-color: red;
+}
+
+form.delete input[type="submit"]:hover,
+form.delete input[type="submit"]:active {
+  background-color: darkred;
+}
+
 
 label {
   font-size: 25px;
   }
 
 input {
-  width: 60%;
-  padding: 12px 20px;
-  margin: 8px 0;
+  font-size: 25px;
+  color: white;
+  padding: 5px 11px;
   box-sizing: border-box;
 }
 
 input[type=submit]:hover {
   background-color: rgba(140,140,140,.25);
+  color: white;
+  font-size: 25px;
 }
 
 html { font-size: 62.5%; }

@@ -12,36 +12,28 @@
 
 <div style="width:100vw; height:90vh; float: up;">
     <div id="summary1" style="width:50%; float: left;">
-        <h2>Summary</h2>
+        <h3>Summary</h3>
         <table style="width:90%; margin-left: auto; margin-right: auto;">
             <tr>
-                <td style="background-color:blue;">Deposited</td>
-                <td style="background-color:red;"><b>{{totals[0]}} €</b></td>
+                <td style="background-color:blue; text-align: left;">Deposited</td>
+                <td style="background-color:red;"><b>{{'%0.2f'|format(totals[0])|float}} €</b></td>
             </tr>
             <tr>
-                <td style="background-color:blue;">Withdrawn</td>
-                <td style="background-color:green;"><b>{{totals[1]}} €</b></td>
+                <td style="background-color:blue; text-align: left;">Withdrawn</td>
+                <td style="background-color:green;"><b>{{'%0.2f'|format(totals[1])|float}} €</b></td>
             </tr>
 
             <tr>
-                <td style="background-color:blue;">Total</td>
-                {% if totals[2] < 0 %}
-                <td style="background-color:red;"><b>{{totals[2]}} €</b></td>
-                {% else %}
-                <td style="background-color:green;"><b>{{totals[2]}} €</b></td>
-                {% endif %}
+                <td style="background-color:blue; text-align: left;">Total</td>
+                <td style="background-color:{% if totals[2] < 0 %}red{% else %}green{% endif%};"><b>{{'%0.2f'|format(totals[2])|float}} €</b></td>
             </tr>
             <tr>
-                <td style="background-color:blue;">Portfolio</td>
+                <td style="background-color:blue; text-align: left;">Portfolio</td>
                 <td style="background-color:grey;"><b>{{'%0.2f'|format(totals[3])|float}} €</b></td>
             </tr>
             <tr>
-                <td style="background-color:blue;">Profit</td>
-                {% if totals[4] < 0 %}
-                <td style="background-color:red;"><b>{{'%0.2f'|format(totals[4])|float}} €</b></td>
-                {% else %}
-                <td style="background-color:green;"><b>{{'%0.2f'|format(totals[4])|float}} €</b></td>
-                {% endif %}
+                <td style="background-color:blue; text-align: left;">Profit</td>
+                <td style="background-color:{% if totals[4] < 0 %}red{% else %}green{% endif %};"><b>{{'%0.2f'|format(totals[4])|float}} €</b></td>
             </tr>
         </table>
 
@@ -50,7 +42,7 @@
     </div>
 
     <div id="summary2" style="width:50%; float: left;">
-        <h2>Portfolio balance : {{'%0.2f'| format(total_balance)|float}} $</h2>
+        <h3>Portfolio balance : {{'%0.2f'| format(total_balance)|float}} $</h3>
         <table id="tracker" style="width:90%; margin-left: auto; margin-right: auto;">
             <thead>
                 <tr>
@@ -62,7 +54,7 @@
             </thead>
             {% for key, value in balance.items() %}
             <tr>
-                <td style="background-color:blue;">{{value["asset"]}}</td>
+                <td style="background-color:blue; text-align: left;">{{value["asset"]}}</td>
                 <td style="background-color: rgba(128,128,128,.25);"><b>{{'%0.6f'| format(value["amount"]|float)}}</b></td>
                 <td style="background-color: rgba(128,128,128,.25);"><b>{{'%0.2f'| format(value["usd"]|float)}} $</b></td>
                 {% set percent = value["usd"]/total_balance*100 %}
@@ -76,14 +68,14 @@
 
 <a name="historic"></a>
 <div id="historic" style="width:100vw;">
-    <h1>Deposit - Withdrawal</h1>
+    <h3>Deposit - Withdrawal</h3>
     <div class= "showTable" id="deposit_table">
         <div style="width:100%; height:48px;">
             <a onclick="showall('d')" >Show more</a>
             <a onclick="showless('d')" >Show less</a>
         </div>
         <div style="width:100%;">
-            <table id="dep_table" style="width:60%; margin-left: auto; margin-right: auto;">
+            <table id="dep_table" style="width:60%; margin-left: auto; margin-right: auto; text-align: center;">
                     <thead>
                     <tr>
                         <th>Amount</th>
@@ -115,14 +107,14 @@
 
 <a name="portfolio"></a>
 <div id="portfolio" style="width:100vw;">
-    <h1>Portfolio</h1>
+    <h3>Portfolio</h3>
     <div class= "showTable" id="portfolio">
         <div style="width:100%; height:48px;">
             <a onclick="showall('p')" >Show more</a>
             <a onclick="showless('p')" >Show less</a>
         </div>
         <div style="width:100%;">
-        <table id="pf_table" style="width:60%; margin-left: auto; margin-right: auto;">
+        <table id="pf_table" style="width:60%; margin-left: auto; margin-right: auto; text-align: center;">
             <thead>
                 <tr>
                     <th>Date</th>
