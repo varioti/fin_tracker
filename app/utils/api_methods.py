@@ -25,6 +25,8 @@ def get_timestamp_offset():
     return json.loads(response.text)["serverTime"] - int(time.time() * 1000)
 
 def generate_signature(query_string):
+    print("Binance API Secret:", binance_api_secret[:10])
+
     m = hmac.new(binance_api_secret.encode("utf-8"), query_string.encode("utf-8"), hashlib.sha256)
     return m.hexdigest()
 
@@ -187,7 +189,7 @@ def get_blockchain_balance(address):
     # Check address
     if len(address) != 42 :
         return 0, 0
-    
+
     url = f"https://blockchain.info/balance?active={address}"
 
     response = requests.get(url)
@@ -203,7 +205,7 @@ def get_etherscan_balance(address):
     # Check address
     if len(address) != 42 :
         return 0, 0
-    
+
     url = f"https://api.etherscan.io/api?module=account&action=balance&address={address}&tag=latest&apikey={etherscan_api_key}"
     response = requests.get(url)
     balance_in_wei = json.loads(response.text)["result"]
@@ -304,7 +306,7 @@ def get_global_balance(manual_data=[]):
     # OTHERS WALLETS
     for record in manual_data:
         asset = record.asset
-        amount = record.amount
+        amount = float(record.amount)
         platform = record.platform
         usd_value = record.getUSDValue()
 

@@ -1,5 +1,5 @@
-from app import app, db
-from app.models import *  
+from app import app
+from app.models import Coin, CryptoTransactions, CryptoManualPortfolio, CryptoPortfolioTimestamps
 from config import SECRET_KEY
 from flask import render_template, redirect, session, request, url_for
 
@@ -55,11 +55,11 @@ def list_coins():
 def read_coin(id):
     if not 'logged_in' in session:
         return authenticate()
-        
+
     coin = Coin.get(id)
     if coin is None:
         return "Coin not found", 404
-    
+
     o = get_orders(coin.coin, "BUSD") + get_orders(coin.coin, "USDT") + get_orders(coin.coin, "EUR", False)
     # Sort the list of orders with descending date
     sorted_orders = sorted(o, key=lambda x: x['time'], reverse=True)
@@ -79,7 +79,7 @@ def read_coin(id):
 def create_coin():
     if not 'logged_in' in session:
         return authenticate()
-    
+
     if request.method == "POST":
         # Get form data
         coin = request.form.get("coin")
@@ -106,7 +106,7 @@ def create_coin():
 def delete_coin(id):
     if not 'logged_in' in session:
         return authenticate()
-    
+
     coin = Coin.get(id)
     if coin is None:
         return "Coin not found", 404
@@ -121,7 +121,7 @@ def delete_coin(id):
 def update_coin(id):
     if not 'logged_in' in session:
         return authenticate()
-    
+
     coin = Coin.get(id)
     if coin is None:
         return "Coin not found", 404
@@ -154,7 +154,7 @@ def update_coin(id):
 def add_buy_order(id):
     if not 'logged_in' in session:
         return authenticate()
-    
+
     coin = Coin.get(id)
     if coin is None:
         return "Coin not found", 404
@@ -176,7 +176,7 @@ def add_buy_order(id):
 def add_sell_order(id):
     if not 'logged_in' in session:
         return authenticate()
-    
+
     coin = Coin.get(id)
     if coin is None:
         return "Coin not found", 404
@@ -201,7 +201,7 @@ def add_sell_order(id):
 def portfolio():
     if not 'logged_in' in session:
         return authenticate()
-    
+
     # Get all the coins retrieved from the database
     manual_coins = CryptoManualPortfolio.query.all()
     manual_total = float(sum([coin.getUSDValue() for coin in manual_coins]))
@@ -215,13 +215,13 @@ def portfolio():
 def portfolio_add():
     if not 'logged_in' in session:
         return authenticate()
-    
+
     if request.method == "POST":
         # Get form data
         coin = request.form.get("asset")
         if get_price(coin) == 0:
             return "Coin not found", 404
-        
+
         amount = request.form.get("amount")
         platform = request.form.get("platform")
 
@@ -240,7 +240,7 @@ def portfolio_add():
 def portfolio_delete(id):
     if not 'logged_in' in session:
         return authenticate()
-    
+
     coin = CryptoManualPortfolio.get(id)
     if coin is None:
         return "Coin not found", 404
@@ -254,7 +254,7 @@ def portfolio_delete(id):
 def portfolio_update(id):
     if not 'logged_in' in session:
         return authenticate()
-    
+
     coin = CryptoManualPortfolio.get(id)
     if coin is None:
         return "Coin not found", 404
@@ -284,11 +284,11 @@ def portfolio_update(id):
 def crypto_deposit():
         if not 'logged_in' in session:
             return authenticate()
-        
+
         # Get deposit and portfolio timestamps historic sorted by date
         deposit_historic = CryptoTransactions.query.all()
         deposit_historic = sorted(deposit_historic, key=lambda x: x.deposit_date, reverse=True)
-        
+
         portfolio_historic = CryptoPortfolioTimestamps.query.all()
         portfolio_historic = sorted(portfolio_historic, key=lambda x: x.pf_date, reverse=True)
 
@@ -346,7 +346,7 @@ def crypto_deposit():
 def crypto_deposit_add():
     if not 'logged_in' in session:
         return authenticate()
-    
+
     if request.method == "POST":
         # Get form data
         amount = request.form.get("amount")
@@ -368,7 +368,7 @@ def crypto_deposit_add():
 def crypto_deposit_delete(id):
     if not 'logged_in' in session:
         return authenticate()
-    
+
     coin = CryptoTransactions.get(id)
     if coin is None:
         return "Coin not found", 404
@@ -382,7 +382,7 @@ def crypto_deposit_delete(id):
 def crypto_deposit_update(id):
     if not 'logged_in' in session:
         return authenticate()
-    
+
     coin = CryptoTransactions.get(id)
     if coin is None:
         return "Coin not found", 404
@@ -408,7 +408,7 @@ def crypto_deposit_update(id):
 def crypto_timestamp_add():
     if not 'logged_in' in session:
         return authenticate()
-    
+
     if request.method == "POST":
         # Get form data
         amount = request.form.get("amount")
@@ -428,7 +428,7 @@ def crypto_timestamp_add():
 def crypto_timestamp_delete(id):
     if not 'logged_in' in session:
         return authenticate()
-    
+
     coin = CryptoPortfolioTimestamps.get(id)
     if coin is None:
         return "Coin not found", 404
@@ -442,7 +442,7 @@ def crypto_timestamp_delete(id):
 def crypto_timestamp_update(id):
     if not 'logged_in' in session:
         return authenticate()
-    
+
     coin = CryptoPortfolioTimestamps.get(id)
     if coin is None:
         return "Coin not found", 404
