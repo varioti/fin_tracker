@@ -60,7 +60,7 @@ def read_coin(id):
     if coin is None:
         return "Coin not found", 404
 
-    o = get_orders(coin.coin, "BUSD") + get_orders(coin.coin, "USDT") + get_orders(coin.coin, "EUR", False)
+    o = get_orders(coin.coin, "USD") + get_orders(coin.coin, "EUR")
     # Sort the list of orders with descending date
     sorted_orders = sorted(o, key=lambda x: x['time'], reverse=True)
 

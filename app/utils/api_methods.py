@@ -28,31 +28,83 @@ def generate_signature(query_string):
     m = hmac.new(binance_api_secret.encode("utf-8"), query_string.encode("utf-8"), hashlib.sha256)
     return m.hexdigest()
 
+# Symbols
+def get_symbols(coin, coin2=""):
+    """ Get all Binance symbols (trading pairs) related to a coin
+
+        Parameters:
+        -----------
+        - coin (str): symbol name of a coin (BTC, ETH, USDT, ...)
+        - coin2 (str) [opt]: symbol name of a second coin (USD, ETH, USDT, ...)
+
+        Returns:
+        --------
+        - symbols (list<str>): all symbols (trading pairs) related to these coins (BTCUSDT, ETHBTC, ...)
+    """
+    # Init query: gather all Binance symbols
+    url = "{}/api/v3/exchangeInfo".format(uri)
+    result = json.loads(requests.request("GET", url).text)
+
+    # Filter result
+    coin = coin.upper()
+    symbols = [x["symbol"] for x in result["symbols"] if (coin in x["symbol"] and coin2 in x["symbol"])]
+
+    return symbols
+
 # ORDERS
-def get_orders(s1, s2="BUSD", price_is_usd=True):
-    symbol = s1+s2
-    timestamp = int(time.time() * 1000 + get_timestamp_offset())
-    query_string = "symbol={}&timestamp={}".format(symbol,timestamp)
-    signature = generate_signature(query_string)
+def get_orders(coin, coin2=""):
+    """ Get all Binance orders related to a coin
 
-    url = "{}/api/v3/allOrders?{}&signature={}".format(uri, query_string, signature)
+        Parameters:
+        -----------
+        - coin (str): symbol name of a coin (BTC, ETH, USDT, ...)
+        - coin2 (str) [opt]: symbol name of a second coin (USD, ETH, USDT, ...)
 
+        Returns:
+        --------
+        - orders (list<dict>): all orders related to these coins (see Binance API doc)
+    """
+    # Load all symbols available for coins provided
+    symbols = get_symbols(coin, coin2)
+    print(symbols)
+    if len(symbols) == 0:
+        return []
+
+    # Loop over all symbols available
+    orders = []
     payload = {}
     headers = {
       "Content-Type": "application/json",
       "X-MBX-APIKEY": binance_api_key
     }
-    all_orders = json.loads(requests.request("GET", url, headers=headers, data=payload).text)
+    for symbol in symbols:
+        timestamp = int(time.time() * 1000 + get_timestamp_offset())
+        query_string = "symbol={}&timestamp={}".format(symbol,timestamp)
+        signature = generate_signature(query_string)
+        url = "{}/api/v3/allOrders?{}&signature={}".format(uri, query_string, signature)
+        symbol_orders = json.loads(requests.request("GET", url, headers=headers, data=payload).text)
 
-    # Compute quantity in usd if it's not already the case
-    if not price_is_usd :
-        for i in range(len(all_orders)):
-            s2_price = get_price(s2)
-            new_qtt = s2_price * float(all_orders[i]["cummulativeQuoteQty"])
-            all_orders[i]["cummulativeQuoteQty"] = new_qtt
+        # Compute quantity in usd if it's not already the case
+        if not "USD" in symbol :
+            for i in range(len(symbol_orders)):
+                # must compute usd price with second symbol
+                if symbol.startswith(coin): # coin is 1st symbol
+                    price = get_price(symbol.replace(coin, "", 1))
+                else: # coin is 2nd symbol
+                    price = get_price(coin)
 
-    return all_orders
+                # Change to have USD qtt (and save origin value in a new field)
+                original_qtt = symbol_orders[i]["cummulativeQuoteQty"]
 
+                new_qtt = price * float(original_qtt)
+                symbol_orders[i]["cummulativeQuoteQty"] = new_qtt
+                symbol_orders[i]["originCummulativeQuoteQty"] = original_qtt
+
+        orders = orders + symbol_orders
+
+    return orders
+
+# Price
 def get_price(symbol1,symbol2="USD"):
     if symbol2 in symbol1:
         return 1
@@ -185,16 +237,25 @@ def get_all_earn_products():
 
 def get_blockchain_balance(address):
     # Check address
-    if len(address) != 42 :
+    if len(address) != 42:
         return 0, 0
 
     url = f"https://blockchain.info/balance?active={address}"
 
     response = requests.get(url)
-    balance_in_sat = int(json.loads(response.text)[address]["final_balance"])
-    balance_in_btc = balance_in_sat/10**8
 
-    price_usd = get_price("BTC","USD")
+    # Check if the response is empty or not in JSON format
+    if not response.text:
+        return 0, 0
+
+    try:
+        balance_in_sat = int(json.loads(response.text)[address]["final_balance"])
+    except json.decoder.JSONDecodeError:
+        return 0, 0
+
+    balance_in_btc = balance_in_sat / 10**8
+
+    price_usd = get_price("BTC", "USD")
     balance_in_usd = balance_in_btc * price_usd
 
     return balance_in_btc, balance_in_usd
