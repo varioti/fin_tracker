@@ -404,7 +404,7 @@ def crypto_deposit_update(id):
 
     return render_template("evolution/deposit_update.html", amount=coin.amount, date=coin.deposit_date, platform=coin.exchange)
 
-@app.route("/crypto/evolution/timestamp/add", methods=["GET","POST"])
+@app.route("/crypto/evolution/timestamp/add/", methods=["GET","POST"])
 def crypto_timestamp_add():
     if not 'logged_in' in session:
         return authenticate()
@@ -422,7 +422,8 @@ def crypto_timestamp_add():
 
         return redirect(url_for("crypto_deposit"))
 
-    return render_template("evolution/timestamp_add.html")
+    today = datetime.today().date()
+    return render_template("evolution/timestamp_add.html", today = today)
 
 @app.route("/crypto/evolution/timestamp/delete/<int:id>", methods=["GET", "POST"])
 def crypto_timestamp_delete(id):

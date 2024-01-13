@@ -25,8 +25,6 @@ def get_timestamp_offset():
     return json.loads(response.text)["serverTime"] - int(time.time() * 1000)
 
 def generate_signature(query_string):
-    print("Binance API Secret:", binance_api_secret[:10])
-
     m = hmac.new(binance_api_secret.encode("utf-8"), query_string.encode("utf-8"), hashlib.sha256)
     return m.hexdigest()
 
