@@ -2,6 +2,7 @@ import hmac
 import hashlib
 import requests
 import json
+from json.decoder import JSONDecodeError
 import time
 
 from config import BINANCE_API_SECRET, BINANCE_API_KEY, ETHERSCAN_API_KEY, ETHERSCAN_ADDRESS, BTC_ADDRESS
@@ -139,36 +140,6 @@ def get_spot_balance():
     }
     return json.loads(requests.request("GET", url, headers=headers, data=payload).text)["balances"]
 
-def get_flexible_savings_balance(asset):
-    timestamp = int(time.time() * 1000 + get_timestamp_offset())
-    query_string = "asset={}&timestamp={}".format(asset, timestamp)
-    signature = generate_signature(query_string)
-
-    url = "{}/sapi/v1/lending/daily/token/position?{}&signature={}".format(uri, query_string, signature)
-
-    payload = {}
-    headers = {
-      "Content-Type": "application/json",
-      "X-MBX-APIKEY": binance_api_key
-    }
-
-    return json.loads(requests.request("GET", url, headers=headers, data=payload).text)
-
-def get_locked_savings_balance(asset, project_id):
-    timestamp = int(time.time() * 1000 + get_timestamp_offset())
-    query_string = "asset={}&projectId={}&status=HOLDING&timestamp={}".format(asset, project_id, timestamp)
-    signature = generate_signature(query_string)
-
-    url = "{}/sapi/v1/lending/project/position/list?{}&signature={}".format(uri, query_string, signature)
-
-    payload = {}
-    headers = {
-      "Content-Type": "application/json",
-      "X-MBX-APIKEY": binance_api_key
-    }
-
-    return json.loads(requests.request("GET", url, headers=headers, data=payload).text)
-
 def get_funding_balance():
     timestamp = int(time.time() * 1000 + get_timestamp_offset())
     query_string = "status=HOLDING&timestamp={}".format(timestamp)
@@ -184,56 +155,29 @@ def get_funding_balance():
 
     return json.loads(requests.request("POST", url, headers=headers, data=payload).text)
 
-def get_savings_balance():
+def get_earn_positions():
+    """ Get all flexible and locked products positions from Binance API
+
+        Returns:
+        --------
+        - positions (list<dict>): all felxible and locked positions related to these coins (see Binance API doc)
+    """
     timestamp = int(time.time() * 1000 + get_timestamp_offset())
-    query_string = "status=HOLDING&timestamp={}".format(timestamp)
+    query_string = "timestamp={}".format(timestamp)
     signature = generate_signature(query_string)
 
-    url = "{}/sapi/v1/lending/union/account?{}&signature={}".format(uri, query_string, signature)
-
+    url_flex = "{}/sapi/v1/simple-earn/flexible/position?{}&signature={}".format(uri, query_string, signature)
+    url_lock = "{}/sapi/v1/simple-earn/locked/position?{}&signature={}".format(uri, query_string, signature)
     payload = {}
     headers = {
       "Content-Type": "application/json",
       "X-MBX-APIKEY": binance_api_key
     }
 
-    return json.loads(requests.request("GET", url, headers=headers, data=payload).text)
+    flexible_positions = json.loads(requests.request("GET", url_flex, headers=headers, data=payload).text)["rows"]
+    locked_positions = json.loads(requests.request("GET", url_lock, headers=headers, data=payload).text)["rows"]
 
-def get_all_earn_products():
-    """ Gets all savings products from Binance """
-    def get_earn_products(current_page=1):
-        """ Gets 50 savings products in "current" page ...modified from source:
-            https://binance-docs.github.io/apidocs/spot/en/#savings-endpoints """
-        timestamp = int(time.time() * 1000 + get_timestamp_offset())
-        query_string = "&current={}&status=SUBSCRIBABLE&timestamp={}".format(
-                        current_page, timestamp)
-        signature = generate_signature(query_string)
-
-        url = "{}/sapi/v1/lending/daily/product/list?{}&signature={}".format(
-                  uri, query_string, signature)
-
-        payload = {}
-        headers = {"Content-Type": "application/json",
-                  "X-MBX-APIKEY": binance_api_key}
-
-        result = json.loads(requests.request("GET", url, headers=headers, data=payload).text)
-
-        return result
-
-    all_products = []
-    more_products = True
-    current_page = 0
-
-    while more_products:
-        current_page += 1
-        prod = get_earn_products(current_page=current_page)
-        all_products.extend(prod)
-        if len(prod)==50:
-            more_products = True
-        else:
-            more_products = False
-
-    return all_products
+    return flexible_positions + locked_positions
 
 def get_blockchain_balance(address):
     # Check address
@@ -260,9 +204,9 @@ def get_blockchain_balance(address):
 
     return balance_in_btc, balance_in_usd
 
-def get_etherscan_balance(address):
+def get_etherscan_balance(address="", etherscan_api_key=""):
     # Check address
-    if len(address) != 42 :
+    if len(address) != 42 or etherscan_api_key == "":
         return 0, 0
 
     url = f"https://api.etherscan.io/api?module=account&action=balance&address={address}&tag=latest&apikey={etherscan_api_key}"
@@ -280,16 +224,21 @@ def get_global_balance(manual_data=[]):
     balance = 0
     assets = {}
 
-    # SAVINGS
-    savings = get_savings_balance()
-    balance = balance + float(savings["totalAmountInUSDT"]) + float(savings["totalFixedAmountInUSDT"])
-    for pos in savings["positionAmountVos"] :
-        if float(pos["amount"]) > 0 and "LD" != pos["asset"][:2]:
+    # SIMPLE EARN
+    earn_positions = get_earn_positions()
+    for pos in earn_positions :
+        if "totalAmount" in pos and float(pos["totalAmount"]) > 0:
+            amount = float(pos["totalAmount"])
+            price_usd = get_price(pos["asset"],"USD")
+            amount_usd = amount * price_usd
+            balance = balance + amount_usd
             if not pos["asset"] in assets :
-                assets[pos["asset"]] = {"asset":pos["asset"], "amount":float(pos["amount"]), "usd":float(pos["amountInUSDT"]), "platform":"BINANCE Savings"}
+                price_usd = get_price(pos["asset"],"USD")
+                assets[pos["asset"]] = {"asset":pos["asset"], "amount":amount, "usd":amount_usd, "platform":"BINANCE Earn"}
             else :
-                assets[pos["asset"]]["amount"] += float(pos["amount"])
-                assets[pos["asset"]]["usd"] += float(pos["amountInUSDT"])
+                assets[pos["asset"]]["amount"] += amount
+                assets[pos["asset"]]["usd"] += amount_usd
+
 
     # FUNDINGS
     fundings = get_funding_balance()
@@ -338,29 +287,30 @@ def get_global_balance(manual_data=[]):
                             assets[s["asset"]]["platform"] += " & Spot"
 
     # ETHERSCAN
-    balance_in_ether, balance_in_usd = get_etherscan_balance(etherscan_address)
+    balance_in_ether, balance_in_usd = get_etherscan_balance(etherscan_address, etherscan_api_key)
+    if balance_in_ether > 0 :
+        if not ("ETH" in assets) :
+            assets["ETH"] = {"asset":"ETH", "amount":balance_in_ether, "usd":balance_in_usd, "platform":"ETHER"}
+        else :
+            assets["ETH"]["amount"] += balance_in_ether
+            assets["ETH"]["usd"] += balance_in_usd
+            if "ETHER" not in assets["ETH"]["platform"] :
+                assets["ETH"]["platform"] += " & ETHER"
 
-    if not ("ETH" in assets) :
-        assets["ETH"] = {"asset":"ETH", "amount":balance_in_ether, "usd":balance_in_usd, "platform":"ETHER"}
-    else :
-        assets["ETH"]["amount"] += balance_in_ether
-        assets["ETH"]["usd"] += balance_in_usd
-        if "ETHER" not in assets["ETH"]["platform"] :
-            assets["ETH"]["platform"] += " & ETHER"
-
-    balance += balance_in_usd
+        balance += balance_in_usd
 
     # BLOCKCHAIN.COM (BTC)
     balance_in_btc, balance_in_usd = get_blockchain_balance(btc_address)
-    if not ("BTC" in assets) :
-        assets["BTC"] = {"asset":"BTC", "amount":balance_in_btc, "usd":balance_in_usd, "platform":"BTC"}
-    else :
-        assets["BTC"]["amount"] += balance_in_btc
-        assets["BTC"]["usd"] += balance_in_usd
-        if "BTC" not in assets["BTC"]["platform"] :
-            assets["BTC"]["platform"] += " & BTC"
+    if balance_in_btc > 0 :
+        if not ("BTC" in assets) :
+            assets["BTC"] = {"asset":"BTC", "amount":balance_in_btc, "usd":balance_in_usd, "platform":"BTC"}
+        else :
+            assets["BTC"]["amount"] += balance_in_btc
+            assets["BTC"]["usd"] += balance_in_usd
+            if "BTC" not in assets["BTC"]["platform"] :
+                assets["BTC"]["platform"] += " & BTC"
 
-    balance += balance_in_usd
+        balance += balance_in_usd
 
     # OTHERS WALLETS
     for record in manual_data:
@@ -380,5 +330,3 @@ def get_global_balance(manual_data=[]):
         balance += usd_value
 
     return balance, assets
-
-get_global_balance()
