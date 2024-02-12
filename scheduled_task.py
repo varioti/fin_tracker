@@ -1,6 +1,6 @@
 import datetime
 from app.models import CryptoManualPortfolio, CryptoPortfolioTimestamps
-from app.crypto.api_methods import get_global_balance, get_price
+from app.utils.api_methods import get_global_balance, get_price
 
 # Check if SUNDAY
 today = datetime.date.today()
