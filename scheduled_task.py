@@ -11,6 +11,6 @@ if (weekday == 6):
     price_today = get_price("EUR")
 
     new_timestamp = CryptoPortfolioTimestamps.create(
-        pf_date=today.date(),
+        pf_date=today,
         amount=total_balance/price_today
     )
