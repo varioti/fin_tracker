@@ -1,19 +1,34 @@
 from app import db
 from app.utils.api_methods import get_price
+import time
 
 class BaseModel(db.Model):
     __abstract__ = True
 
     @classmethod
     def create(cls, **kwargs):
-        record = cls(**kwargs)
-        db.session.add(record)
-        db.session.commit()
-        return record
+        max_retries = 3  # Maximum number of retries
+        retries = 0
+        while retries < max_retries:
+            try:
+                record = cls(**kwargs)
+                db.session.add(record)
+                db.session.commit()
+                return record
+            except Exception as e:
+                db.session.rollback()
+                retries += 1
+                time.sleep(3)  # Wait for 3 seconds before retrying
+                print(f"Retry attempt {retries} due to error: {e}")
+            raise Exception("Failed to create record after multiple retries")
 
     @classmethod
     def get(cls, id):
         return cls.query.get(id)
+
+    @classmethod
+    def find_by_field(cls, field_name, value):
+        return cls.query.filter(getattr(cls, field_name) == value).all()
 
     def update(self, **kwargs):
         for key, value in kwargs.items():
@@ -87,6 +102,20 @@ class CryptoManualPortfolio(BaseModel):
 
     id = db.Column(db.SmallInteger, primary_key=True, autoincrement=True)
     asset = db.Column(db.String(255), nullable=False)
+    amount = db.Column(db.DECIMAL(precision=18, scale=8), nullable=False)
+    platform = db.Column(db.String(255))
+
+    def getPrice(self):
+        return get_price(self.asset)
+
+    def getUSDValue(self):
+        return self.getPrice() * float(self.amount)
+
+class CryptoAutoPortfolio(BaseModel):
+    __tablename__ = 'crypto_auto_portfolio'
+
+    id = db.Column(db.SmallInteger, primary_key=True, autoincrement=True)
+    asset = db.Column(db.String(255), nullable=False, unique=True)
     amount = db.Column(db.DECIMAL(precision=18, scale=8), nullable=False)
     platform = db.Column(db.String(255))
 

@@ -17,12 +17,14 @@ $(document).ready(function() {
     let total_month3 = {"buy":0, "sell":0};
     let total_month6 = {"buy":0, "sell":0};
     let total_year = {"buy":0, "sell":0};
+    let total_all = {"buy":0, "sell":0};
 
     let mean_week = {"buy":0, "sell":0};
     let mean_month = {"buy":0, "sell":0};
     let mean_month3 = {"buy":0, "sell":0};
     let mean_month6 = {"buy":0, "sell":0};
     let mean_year = {"buy":0, "sell":0};
+    let mean_all = {"buy":0, "sell":0};
 
     let date, mean, total, type
     for (let i = 1; i < orders.rows.length; i++) {
@@ -89,6 +91,14 @@ $(document).ready(function() {
                 }
                 total_year[type] += total;
             }
+
+            // all orders
+            if (total_all[type] == 0) {
+                mean_all[type] = mean;
+            } else {
+                mean_all[type] = (total_all[type]*mean_all[type] + total*mean) / (total_all[type] + total);
+            }
+            total_all[type] += total;
         }
     }
 
@@ -121,5 +131,11 @@ $(document).ready(function() {
     resume.rows[1].cells[6].innerHTML = Math.round(mean_year["buy"] * 100) / 100;
     resume.rows[4].cells[6].innerHTML = Math.round(total_year["sell"] * 100) / 100;
     resume.rows[3].cells[6].innerHTML = Math.round(mean_year["sell"] * 100) / 100;
+
+    // update values all
+    resume.rows[2].cells[7].innerHTML = Math.round(total_all["buy"] * 100) / 100;
+    resume.rows[1].cells[7].innerHTML = Math.round(mean_all["buy"] * 100) / 100;
+    resume.rows[4].cells[7].innerHTML = Math.round(total_all["sell"] * 100) / 100;
+    resume.rows[3].cells[7].innerHTML = Math.round(mean_all["sell"] * 100) / 100;
 
 });

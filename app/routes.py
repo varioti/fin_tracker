@@ -1,5 +1,5 @@
 from app import app
-from app.models import Coin, CryptoTransactions, CryptoManualPortfolio, CryptoPortfolioTimestamps
+from app.models import Coin, CryptoTransactions, CryptoManualPortfolio, CryptoAutoPortfolio, CryptoPortfolioTimestamps
 from config import SECRET_KEY
 from flask import render_template, redirect, session, request, url_for
 
@@ -10,6 +10,7 @@ import json
 import plotly
 import plotly.express as px
 from datetime import datetime
+import time
 
 ########
 # AUTH #
@@ -209,6 +210,26 @@ def portfolio():
     # Get all the coins retrieved from the APIs
     auto_total, auto_coins = get_global_balance()
 
+    for asset, asset_data in auto_coins.items():
+        coin = CryptoAutoPortfolio.find_by_field("asset", asset)
+
+        # If the asset doesn't exist, create a new record
+        if not coin:
+            CryptoAutoPortfolio.create(
+                asset=asset,
+                amount=asset_data['amount'],
+                platform=asset_data['platform'],
+            )
+        # If the asset exists, update the existing record
+        else:
+            coin[0].update(
+                asset=asset,
+                amount=asset_data['amount'],
+                platform=asset_data['platform'],
+            )
+
+        print(f"{asset} updated")
+
     return render_template("portfolio/portfolio.html", coins = auto_coins, total_balance = auto_total + manual_total, manual_coins = manual_coins)
 
 @app.route("/crypto/portfolio/add/", methods=["GET","POST"])
@@ -282,65 +303,84 @@ def portfolio_update(id):
 
 @app.route("/crypto/evolution/", methods=["GET","POST"])
 def crypto_deposit():
-        if not 'logged_in' in session:
-            return authenticate()
+    if not 'logged_in' in session:
+        return authenticate()
 
-        # Get deposit and portfolio timestamps historic sorted by date
-        deposit_historic = CryptoTransactions.query.all()
-        deposit_historic = sorted(deposit_historic, key=lambda x: x.deposit_date, reverse=True)
+    start_time = time.time()
+    print(f"Start: {start_time}")
 
-        portfolio_historic = CryptoPortfolioTimestamps.query.all()
-        portfolio_historic = sorted(portfolio_historic, key=lambda x: x.pf_date, reverse=True)
+    # Get deposit and portfolio timestamps historic sorted by date
+    deposit_historic = CryptoTransactions.query.all()
+    deposit_historic = sorted(deposit_historic, key=lambda x: x.deposit_date, reverse=True)
+    print(f"Deposit: {time.time() - start_time}")
 
-        # Get coins in manual portfolio
-        manual_coins = CryptoManualPortfolio.query.all()
+    portfolio_historic = CryptoPortfolioTimestamps.query.all()
+    portfolio_historic = sorted(portfolio_historic, key=lambda x: x.pf_date, reverse=True)
+    print(f"PF Histo: {time.time() - start_time}")
 
-        # SUMMARY
-        totals_3 = deposit_totals(deposit_historic)
-        evolution = deposit_evolution(deposit_historic)
-        total_balance, balance = get_global_balance(manual_data=manual_coins)
+    # Get coins in manual portfolio
+    manual_coins = CryptoManualPortfolio.query.all()
+    print(f"PF Manual: {time.time() - start_time}")
 
-        price_today = get_price("EUR")
-        pf_today_eur = total_balance/price_today
+    # Get coins in auto portfolio
+    auto_coins = CryptoAutoPortfolio.query.all()
+    print(f"PF Auto: {time.time() - start_time}")
 
-        totals =(totals_3[0],totals_3[1],totals_3[2],pf_today_eur,pf_today_eur+totals_3[2])
+    # SUMMARY
+    totals_3 = deposit_totals(deposit_historic)
+    print(f"totals_3: {time.time() - start_time}")
+    evolution = deposit_evolution(deposit_historic)
+    print(f"evolution: {time.time() - start_time}")
+    total_balance, balance = get_global_balance(manual_coins, auto_coins)
+    print(f"get_global_balance: {time.time() - start_time}")
 
-        now_value_present = False
-        now_timestamp = CryptoPortfolioTimestamps(pf_date=datetime.today().date(), amount=total_balance/price_today)
-        if now_value_present:
-            portfolio_historic[0] = now_timestamp
-        else:
-            portfolio_historic.insert(0,now_timestamp)
-        now_timestamp=True
+    price_today = get_price("EUR")
+    pf_today_eur = total_balance/price_today
+    print(f"price_today: {time.time() - start_time}")
 
-        earning = earn_evolution(evolution, portfolio_historic)
+    totals =(totals_3[0],totals_3[1],totals_3[2],pf_today_eur,pf_today_eur+totals_3[2])
 
-        print(len(earning[0]),len(earning[1]),len(earning[2]))
-        print(len(evolution[0]),len(evolution[1]))
+    now_value_present = False
+    now_timestamp = CryptoPortfolioTimestamps(pf_date=datetime.today().date(), amount=total_balance/price_today)
+    if now_value_present:
+        portfolio_historic[0] = now_timestamp
+    else:
+        portfolio_historic.insert(0,now_timestamp)
+    now_timestamp=True
+    print(f"Timestamp now: {time.time() - start_time}")
 
-        # GRAPHIC OF EVOLUTION
-        df2 = pd.DataFrame({
-            "BDates": evolution[0],
-            "Balance": evolution[1],
-        })
+    earning = earn_evolution(evolution, portfolio_historic)
+    print(f"earn_evolution: {time.time() - start_time}")
 
-        df = pd.DataFrame({
-            "Dates": earning[0],
-            "Portfolio": earning[1],
-            "Profit": earning[2]
-        })
+    print(len(earning[0]),len(earning[1]),len(earning[2]))
+    print(len(evolution[0]),len(evolution[1]))
 
-        fig = px.line(df, x="Dates", y=["Portfolio","Profit"])
-        fig.add_scatter(x=df2["BDates"], y=df2["Balance"], mode='lines')
-        fig.data[2].name="Balance"
-        fig.update_traces(showlegend=True)
+    # GRAPHIC OF EVOLUTION
+    df2 = pd.DataFrame({
+        "BDates": evolution[0],
+        "Balance": evolution[1],
+    })
 
-        graphJSON = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
-        header="Evolution"
-        description = """Amount deposited and withdrawn"""
+    df = pd.DataFrame({
+        "Dates": earning[0],
+        "Portfolio": earning[1],
+        "Profit": earning[2]
+    })
 
-        # WEBPAGE
-        return render_template("evolution/evolution.html", total_balance=total_balance, balance=balance, histo = deposit_historic, portfolio = portfolio_historic, totals = totals, graphJSON=graphJSON, header=header,description=description)
+    fig = px.line(df, x="Dates", y=["Portfolio","Profit"])
+    fig.add_scatter(x=df2["BDates"], y=df2["Balance"], mode='lines')
+    fig.data[2].name="Balance"
+    fig.update_traces(showlegend=True)
+
+    graphJSON = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
+    header="Evolution"
+    description = """Amount deposited and withdrawn"""
+    print(f"graph: {time.time() - start_time}")
+    print(f"End load: {time.time()}")
+
+    # WEBPAGE
+    return render_template("evolution/evolution.html", total_balance=total_balance, balance=balance, histo = deposit_historic, portfolio = portfolio_historic, totals = totals, graphJSON=graphJSON, header=header,description=description)
+
 
 @app.route("/crypto/evolution/deposit/add/", methods=["GET","POST"])
 def crypto_deposit_add():

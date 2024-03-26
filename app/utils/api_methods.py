@@ -219,98 +219,117 @@ def get_etherscan_balance(address="", etherscan_api_key=""):
 
     return balance_in_ether, balance_in_usd
 
-def get_global_balance(manual_data=[]):
+def get_global_balance(manual_data=[], auto_data=[]):
     # INIT
     balance = 0
     assets = {}
 
-    # SIMPLE EARN
-    earn_positions = get_earn_positions()
-    for pos in earn_positions :
-        if "totalAmount" in pos and float(pos["totalAmount"]) > 0:
-            amount = float(pos["totalAmount"])
-            price_usd = get_price(pos["asset"],"USD")
-            amount_usd = amount * price_usd
-            balance = balance + amount_usd
-            if not pos["asset"] in assets :
+    if len(auto_data) == 0:
+        # SIMPLE EARN
+        earn_positions = get_earn_positions()
+        for pos in earn_positions :
+            if "totalAmount" in pos and float(pos["totalAmount"]) > 0:
+                amount = float(pos["totalAmount"])
                 price_usd = get_price(pos["asset"],"USD")
-                assets[pos["asset"]] = {"asset":pos["asset"], "amount":amount, "usd":amount_usd, "platform":"BINANCE Earn"}
+                amount_usd = amount * price_usd
+                balance = balance + amount_usd
+                if not pos["asset"] in assets :
+                    price_usd = get_price(pos["asset"],"USD")
+                    assets[pos["asset"]] = {"asset":pos["asset"], "amount":amount, "usd":amount_usd, "platform":"BINANCE Earn"}
+                else :
+                    assets[pos["asset"]]["amount"] += amount
+                    assets[pos["asset"]]["usd"] += amount_usd
+
+
+        # FUNDINGS
+        fundings = get_funding_balance()
+        for f in fundings :
+            if not (f["free"] is None) :
+                price_usd = get_price(f["asset"],"USD")
+                p = float(f["free"])*price_usd
+                balance += p
+
+                if not f["asset"] in assets :
+                    assets[f["asset"]] = {"asset":f["asset"], "amount":float(f["free"]), "usd":p, "platform":"BINANCE Fundings"}
+                else :
+                    assets[f["asset"]]["amount"] += float(f["free"])
+                    assets[f["asset"]]["usd"] += p
+                    if "Fundings" not in assets[f["asset"]]["platform"] :
+                        assets[f["asset"]]["platform"] += " & Fundings"
+
+        # SPOT
+        spots = get_spot_balance()
+        for s in spots :
+            if s["asset"][0:2] != "LD":
+                if (not s["free"] is None) and float(s["free"]) > 0 :
+                    price_usd = get_price(s["asset"],"USD")
+                    if (price_usd is not None) :
+                        p = float(s["free"])*price_usd
+                        balance += p
+                        if not s["asset"] in assets :
+                            assets[s["asset"]] = {"asset":s["asset"], "amount":float(s["free"]), "usd":p, "platform":"BINANCE Spot"}
+                        else :
+                            assets[s["asset"]]["amount"] += float(s["free"])
+                            assets[s["asset"]]["usd"] += p
+                            if "Spot" not in assets[s["asset"]]["platform"] :
+                                assets[s["asset"]]["platform"] += " & Spot"
+
+                if (not s["locked"] is None) and float(s["locked"]) > 0:
+                    price_usd = get_price(s["asset"],"USD")
+                    if (price_usd is not None) :
+                        p = float(s["free"])*price_usd
+                        balance += p
+                        if not s["asset"] in assets :
+                            assets[s["asset"]] = {"asset":s["asset"], "amount":float(s["locked"]), "usd":p, "platform":"BINANCE Spot"}
+                        else :
+                            assets[s["asset"]]["amount"] += float(s["locked"])
+                            assets[s["asset"]]["usd"] += p
+                            if "Spot" not in assets[s["asset"]]["platform"] :
+                                assets[s["asset"]]["platform"] += " & Spot"
+
+        # ETHERSCAN
+        balance_in_ether, balance_in_usd = get_etherscan_balance(etherscan_address, etherscan_api_key)
+        if balance_in_ether > 0 :
+            if not ("ETH" in assets) :
+                assets["ETH"] = {"asset":"ETH", "amount":balance_in_ether, "usd":balance_in_usd, "platform":"ETHER"}
             else :
-                assets[pos["asset"]]["amount"] += amount
-                assets[pos["asset"]]["usd"] += amount_usd
+                assets["ETH"]["amount"] += balance_in_ether
+                assets["ETH"]["usd"] += balance_in_usd
+                if "ETHER" not in assets["ETH"]["platform"] :
+                    assets["ETH"]["platform"] += " & ETHER"
 
+            balance += balance_in_usd
 
-    # FUNDINGS
-    fundings = get_funding_balance()
-    for f in fundings :
-        if not (f["free"] is None) :
-            price_usd = get_price(f["asset"],"USD")
-            p = float(f["free"])*price_usd
-            balance += p
-
-            if not f["asset"] in assets :
-                assets[f["asset"]] = {"asset":f["asset"], "amount":float(f["free"]), "usd":p, "platform":"BINANCE Fundings"}
+        # BLOCKCHAIN.COM (BTC)
+        balance_in_btc, balance_in_usd = get_blockchain_balance(btc_address)
+        if balance_in_btc > 0 :
+            if not ("BTC" in assets) :
+                assets["BTC"] = {"asset":"BTC", "amount":balance_in_btc, "usd":balance_in_usd, "platform":"BTC"}
             else :
-                assets[f["asset"]]["amount"] += float(f["free"])
-                assets[f["asset"]]["usd"] += p
-                if "Fundings" not in assets[f["asset"]]["platform"] :
-                    assets[f["asset"]]["platform"] += " & Fundings"
+                assets["BTC"]["amount"] += balance_in_btc
+                assets["BTC"]["usd"] += balance_in_usd
+                if "BTC" not in assets["BTC"]["platform"] :
+                    assets["BTC"]["platform"] += " & BTC"
 
-    # SPOT
-    spots = get_spot_balance()
-    for s in spots :
-        if s["asset"][0:2] != "LD":
-            if (not s["free"] is None) and float(s["free"]) > 0 :
-                price_usd = get_price(s["asset"],"USD")
-                if (price_usd is not None) :
-                    p = float(s["free"])*price_usd
-                    balance += p
-                    if not s["asset"] in assets :
-                        assets[s["asset"]] = {"asset":s["asset"], "amount":float(s["free"]), "usd":p, "platform":"BINANCE Spot"}
-                    else :
-                        assets[s["asset"]]["amount"] += float(s["free"])
-                        assets[s["asset"]]["usd"] += p
-                        if "Spot" not in assets[s["asset"]]["platform"] :
-                            assets[s["asset"]]["platform"] += " & Spot"
+            balance += balance_in_usd
 
-            if (not s["locked"] is None) and float(s["locked"]) > 0:
-                price_usd = get_price(s["asset"],"USD")
-                if (price_usd is not None) :
-                    p = float(s["free"])*price_usd
-                    balance += p
-                    if not s["asset"] in assets :
-                        assets[s["asset"]] = {"asset":s["asset"], "amount":float(s["locked"]), "usd":p, "platform":"BINANCE Spot"}
-                    else :
-                        assets[s["asset"]]["amount"] += float(s["locked"])
-                        assets[s["asset"]]["usd"] += p
-                        if "Spot" not in assets[s["asset"]]["platform"] :
-                            assets[s["asset"]]["platform"] += " & Spot"
+    # Use AUTO saved wallet instead of API call
+    else:
+        for record in auto_data:
+            asset = record.asset
+            amount = float(record.amount)
+            platform = record.platform
+            usd_value = record.getUSDValue()
 
-    # ETHERSCAN
-    balance_in_ether, balance_in_usd = get_etherscan_balance(etherscan_address, etherscan_api_key)
-    if balance_in_ether > 0 :
-        if not ("ETH" in assets) :
-            assets["ETH"] = {"asset":"ETH", "amount":balance_in_ether, "usd":balance_in_usd, "platform":"ETHER"}
-        else :
-            assets["ETH"]["amount"] += balance_in_ether
-            assets["ETH"]["usd"] += balance_in_usd
-            if "ETHER" not in assets["ETH"]["platform"] :
-                assets["ETH"]["platform"] += " & ETHER"
+            # Add the asset to the assets dictionary
+            if asset not in assets:
+                assets[asset] = {"asset": asset, "amount": amount, "usd": usd_value, "platform": platform}
+            else:
+                assets[asset]["amount"] += amount
+                assets[asset]["usd"] += usd_value
+                assets[asset]["platform"] += f" & {platform}" if platform not in assets[asset]["platform"] else ""
 
-        balance += balance_in_usd
-
-    # BLOCKCHAIN.COM (BTC)
-    balance_in_btc, balance_in_usd = get_blockchain_balance(btc_address)
-    if balance_in_btc > 0 :
-        if not ("BTC" in assets) :
-            assets["BTC"] = {"asset":"BTC", "amount":balance_in_btc, "usd":balance_in_usd, "platform":"BTC"}
-        else :
-            assets["BTC"]["amount"] += balance_in_btc
-            assets["BTC"]["usd"] += balance_in_usd
-            if "BTC" not in assets["BTC"]["platform"] :
-                assets["BTC"]["platform"] += " & BTC"
-
-        balance += balance_in_usd
+            balance += usd_value
 
     # OTHERS WALLETS
     for record in manual_data:
