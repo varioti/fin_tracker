@@ -5,25 +5,17 @@ from app.utils.api_methods import get_global_balance, get_price
 # Each day
 _, assets = get_global_balance()
 
+# Truncate CryptoAutoPortfolio in order to reload it
+CryptoAutoPortfolio.query.delete()
+
+# Fill CryptoAutoPortfolio with refreshed data
 for asset, asset_data in assets.items():
-    coin = CryptoAutoPortfolio.find_by_field("asset", asset)
-
-    # If the asset doesn't exist, create a new record
-    if not coin:
-        CryptoAutoPortfolio.create(
-            asset=asset,
-            amount=asset_data['amount'],
-            platform=asset_data['platform'],
-        )
-    # If the asset exists, update the existing record
-    else:
-        coin[0].update(
-            asset=asset,
-            amount=asset_data['amount'],
-            platform=asset_data['platform'],
-        )
-
-    print(f"{asset} updated")
+    CryptoAutoPortfolio.create(
+        asset=asset,
+        amount=asset_data['amount'],
+        platform=asset_data['platform'],
+    )
+    print(f"{asset} added")
 
 # Check if SUNDAY
 today = datetime.date.today()

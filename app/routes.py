@@ -210,25 +210,17 @@ def portfolio():
     # Get all the coins retrieved from the APIs
     auto_total, auto_coins = get_global_balance()
 
+    # Truncate CryptoAutoPortfolio in order to reload it
+    CryptoAutoPortfolio.query.delete()
+
+    # Fill CryptoAutoPortfolio with refreshed data
     for asset, asset_data in auto_coins.items():
-        coin = CryptoAutoPortfolio.find_by_field("asset", asset)
-
-        # If the asset doesn't exist, create a new record
-        if not coin:
-            CryptoAutoPortfolio.create(
-                asset=asset,
-                amount=asset_data['amount'],
-                platform=asset_data['platform'],
-            )
-        # If the asset exists, update the existing record
-        else:
-            coin[0].update(
-                asset=asset,
-                amount=asset_data['amount'],
-                platform=asset_data['platform'],
-            )
-
-        print(f"{asset} updated")
+        CryptoAutoPortfolio.create(
+            asset=asset,
+            amount=asset_data['amount'],
+            platform=asset_data['platform'],
+        )
+        print(f"{asset} added")
 
     return render_template("portfolio/portfolio.html", coins = auto_coins, total_balance = auto_total + manual_total, manual_coins = manual_coins)
 
